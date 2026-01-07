@@ -14,7 +14,20 @@
       "Bash(cat:*)",
       "Bash(python3:*)",
       "Bash(git remote add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(node:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist:*)",
+      "Bash(git -C \"c:/Users/jeffe/Documents/github/IotSensores\" config --get remote.origin.url)",
+      "Bash(git -C \"c:/Users/jeffe/Documents/github/IotSensores\" log --oneline -10)",
+      "Bash(git -C:*)",
+      "Bash(npm run dev:worker:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

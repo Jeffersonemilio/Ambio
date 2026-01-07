@@ -46,7 +46,7 @@ export class NotificationLogRepository {
   async updateStatus(id: string, status: NotificationStatus, error_message?: string): Promise<NotificationLog> {
     const result = await query<NotificationLog>(
       `UPDATE notifications_log
-       SET status = $2, error_message = $3, sent_at = CASE WHEN $2 = 'SENT' THEN NOW() ELSE sent_at END
+       SET status = $2::text, error_message = $3, sent_at = CASE WHEN $2::text = 'SENT' THEN NOW() ELSE sent_at END
        WHERE id = $1
        RETURNING *`,
       [id, status, error_message || null]

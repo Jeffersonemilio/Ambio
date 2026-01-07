@@ -115,6 +115,24 @@ export class RulesEngineService {
     let actualValue: number;
     let alertType: AlertType;
 
+    // Parse threshold values to ensure they are numbers (PostgreSQL NUMERIC can return as string)
+    const thresholdMin = rule.threshold_min !== null ? Number(rule.threshold_min) : null;
+    const thresholdMax = rule.threshold_max !== null ? Number(rule.threshold_max) : null;
+
+    logger.debug(
+      {
+        ruleId: rule.id,
+        ruleName: rule.name,
+        ruleType: rule.type,
+        ruleCondition: rule.condition,
+        thresholdMin,
+        thresholdMax,
+        readingTemp: reading.temperature,
+        readingHumidity: reading.humidity,
+      },
+      'Checking rule violation'
+    );
+
     switch (rule.type) {
       case 'TEMPERATURE':
         actualValue = reading.temperature;
@@ -135,8 +153,17 @@ export class RulesEngineService {
     const isViolation = this.evaluateCondition(
       actualValue,
       rule.condition,
-      rule.threshold_min,
-      rule.threshold_max
+      thresholdMin,
+      thresholdMax
+    );
+
+    logger.debug(
+      {
+        ruleId: rule.id,
+        actualValue,
+        isViolation,
+      },
+      'Rule evaluation result'
     );
 
     if (!isViolation) {
@@ -163,8 +190,10 @@ export class RulesEngineService {
   ): boolean {
     switch (condition) {
       case 'ABOVE':
-        return max !== null && value > max;
+        // ABOVE: alert when value is above threshold_min (the threshold)
+        return min !== null && value > min;
       case 'BELOW':
+        // BELOW: alert when value is below threshold_min (the threshold)
         return min !== null && value < min;
       case 'BETWEEN':
         // BETWEEN means value should be within range - violation if outside
@@ -206,11 +235,11 @@ export class RulesEngineService {
   private getRelevantThreshold(rule: Rule): number {
     switch (rule.condition) {
       case 'ABOVE':
-        return rule.threshold_max ?? 0;
+        return rule.threshold_min ?? 0;
       case 'BELOW':
         return rule.threshold_min ?? 0;
       default:
-        return rule.threshold_max ?? rule.threshold_min ?? 0;
+        return rule.threshold_min ?? rule.threshold_max ?? 0;
     }
   }
 
