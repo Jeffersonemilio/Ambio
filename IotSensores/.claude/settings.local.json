@@ -27,7 +27,15 @@
       "Bash(git -C \"c:/Users/jeffe/Documents/github/IotSensores\" log --oneline -10)",
       "Bash(git -C:*)",
       "Bash(npm run dev:worker:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(railway version:*)",
+      "Bash(railway --version:*)",
+      "Bash(railway login:*)",
+      "Bash(railway whoami:*)",
+      "Bash(railway list:*)",
+      "Bash(railway link:*)",
+      "Bash(railway status:*)",
+      "Bash(railway service)"
     ]
   }
 }
