@@ -10,6 +10,10 @@ const options = {
     },
     servers: [
       {
+        url: 'https://ambio-production.up.railway.app',
+        description: 'Servidor de produção (Railway)',
+      },
+      {
         url: 'http://localhost:3000',
         description: 'Servidor de desenvolvimento',
       },
