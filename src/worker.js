@@ -1,4 +1,3 @@
-require('dotenv').config();
 const { consumeQueue, connectQueue, QUEUES } = require('./queue');
 const { query, runMigration, testConnection } = require('./database');
 
@@ -31,16 +30,16 @@ async function startWorker() {
   // Test database connection
   const dbConnected = await testConnection();
   if (!dbConnected) {
-    console.error('Falha ao conectar ao PostgreSQL. Encerrando worker.');
-    process.exit(1);
+    console.error('Falha ao conectar ao PostgreSQL.');
+    throw new Error('Database connection failed');
   }
   console.log('PostgreSQL conectado');
 
   // Run migration
   const migrationSuccess = await runMigration();
   if (!migrationSuccess) {
-    console.error('Falha ao executar migration. Encerrando worker.');
-    process.exit(1);
+    console.error('Falha ao executar migration.');
+    throw new Error('Migration failed');
   }
 
   // Connect to RabbitMQ
@@ -49,7 +48,7 @@ async function startWorker() {
     console.log('RabbitMQ conectado');
   } catch (error) {
     console.error('Falha ao conectar ao RabbitMQ:', error.message);
-    process.exit(1);
+    throw error;
   }
 
   // Start consuming
@@ -58,18 +57,24 @@ async function startWorker() {
   console.log('Worker rodando. Aguardando mensagens...');
 }
 
-// Handle graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('Recebido SIGINT. Encerrando worker...');
-  process.exit(0);
-});
+module.exports = { startWorker };
 
-process.on('SIGTERM', async () => {
-  console.log('Recebido SIGTERM. Encerrando worker...');
-  process.exit(0);
-});
+// Se executado diretamente (não importado)
+if (require.main === module) {
+  require('dotenv').config();
 
-startWorker().catch((error) => {
-  console.error('Erro fatal no worker:', error);
-  process.exit(1);
-});
+  process.on('SIGINT', async () => {
+    console.log('Recebido SIGINT. Encerrando worker...');
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    console.log('Recebido SIGTERM. Encerrando worker...');
+    process.exit(0);
+  });
+
+  startWorker().catch((error) => {
+    console.error('Erro fatal no worker:', error);
+    process.exit(1);
+  });
+}
