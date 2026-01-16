@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
+    "worker": "node src/worker.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,8 +22,14 @@
   },
   "homepage": "https://github.com/Jeffersonemilio/Ambio#readme",
   "dependencies": {
+    "amqplib": "^0.10.9",
+    "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "pg": "^8.17.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@railway/cli": "^4.25.2"
   }
 }
