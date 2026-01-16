@@ -119,7 +119,9 @@ async function consumeQueueBatch(queue, callback, options = {}) {
     try {
       await callback(currentBatch);
       currentBatch.forEach((msg) => ch.ack(msg));
-      console.log(`Batch de ${currentBatch.length} mensagens processado com sucesso`);
+      if (config.logging.verbose) {
+        console.log(`Batch de ${currentBatch.length} mensagens processado com sucesso`);
+      }
     } catch (error) {
       console.error('Erro ao processar batch:', error.message);
       currentBatch.forEach((msg) => ch.nack(msg, false, false));

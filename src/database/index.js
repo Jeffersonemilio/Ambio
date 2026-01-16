@@ -16,7 +16,9 @@ async function query(text, params) {
   const start = Date.now();
   const result = await pool.query(text, params);
   const duration = Date.now() - start;
-  console.log('Query executada:', { text: text.substring(0, 50), duration, rows: result.rowCount });
+  if (config.logging.verbose) {
+    console.log('Query executada:', { text: text.substring(0, 50), duration, rows: result.rowCount });
+  }
   return result;
 }
 
@@ -40,7 +42,9 @@ async function batchInsertReadings(readings) {
   const start = Date.now();
   const result = await pool.query(queryText, params);
   const duration = Date.now() - start;
-  console.log('Batch insert executado:', { count: readings.length, duration, rows: result.rowCount });
+  if (config.logging.verbose) {
+    console.log('Batch insert executado:', { count: readings.length, duration, rows: result.rowCount });
+  }
   return result;
 }
 

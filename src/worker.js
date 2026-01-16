@@ -1,5 +1,6 @@
 const { consumeQueueBatch, connectQueue, QUEUES } = require('./queue');
 const { batchInsertReadings, runMigration, testConnection } = require('./database');
+const config = require('./config');
 
 async function processBatchReadings(messages) {
   const readings = messages.map((msg) => {
@@ -7,11 +8,15 @@ async function processBatchReadings(messages) {
     return JSON.parse(content);
   });
 
-  console.log(`Processando batch de ${readings.length} leituras`);
+  if (config.logging.verbose) {
+    console.log(`Processando batch de ${readings.length} leituras`);
+  }
 
   await batchInsertReadings(readings);
 
-  console.log(`Batch de ${readings.length} leituras salvo com sucesso`);
+  if (config.logging.verbose) {
+    console.log(`Batch de ${readings.length} leituras salvo com sucesso`);
+  }
 }
 
 async function startWorker() {

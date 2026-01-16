@@ -7,7 +7,12 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "worker": "node src/worker.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "load-test": "node scripts/load-test.js",
+    "load-test:light": "node scripts/load-test.js --sensors=50 --duration=5 --rate=20",
+    "load-test:full": "node scripts/load-test.js --sensors=100 --duration=30 --rate=30",
+    "load-test:cloud": "node scripts/load-test.js --url=https://ambio-production.up.railway.app --sensors=100 --duration=10 --rate=30",
+    "load-test:cloud:light": "node scripts/load-test.js --url=https://ambio-production.up.railway.app --sensors=50 --duration=5 --rate=20"
   },
   "repository": {
     "type": "git",
