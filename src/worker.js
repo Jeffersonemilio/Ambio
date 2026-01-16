@@ -1,27 +1,17 @@
-const { consumeQueue, connectQueue, QUEUES } = require('./queue');
-const { query, runMigration, testConnection } = require('./database');
+const { consumeQueueBatch, connectQueue, QUEUES } = require('./queue');
+const { batchInsertReadings, runMigration, testConnection } = require('./database');
 
-async function processReading(msg) {
-  const content = msg.content.toString();
-  const data = JSON.parse(content);
+async function processBatchReadings(messages) {
+  const readings = messages.map((msg) => {
+    const content = msg.content.toString();
+    return JSON.parse(content);
+  });
 
-  console.log('Processando leitura:', { serial_number: data.serial_number, received_at: data.received_at });
+  console.log(`Processando batch de ${readings.length} leituras`);
 
-  const insertQuery = `
-    INSERT INTO temp_hum_readings (serial_number, temperature, humidity, battery_level, received_at)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING id
-  `;
+  await batchInsertReadings(readings);
 
-  const result = await query(insertQuery, [
-    data.serial_number,
-    data.temperature,
-    data.humidity,
-    data.battery_level,
-    data.received_at,
-  ]);
-
-  console.log('Leitura salva com sucesso:', { id: result.rows[0].id, serial_number: data.serial_number });
+  console.log(`Batch de ${readings.length} leituras salvo com sucesso`);
 }
 
 async function startWorker() {
@@ -51,10 +41,14 @@ async function startWorker() {
     throw error;
   }
 
-  // Start consuming
-  await consumeQueue(QUEUES.READINGS_PROCESS, processReading, { prefetch: 10 });
+  // Start consuming with batch processing
+  await consumeQueueBatch(QUEUES.READINGS_PROCESS, processBatchReadings, {
+    prefetch: 300,
+    batchSize: 50,
+    batchTimeoutMs: 100,
+  });
 
-  console.log('Worker rodando. Aguardando mensagens...');
+  console.log('Worker rodando com batch processing. Aguardando mensagens...');
 }
 
 module.exports = { startWorker };

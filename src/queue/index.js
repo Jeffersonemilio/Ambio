@@ -94,6 +94,61 @@ async function consumeQueue(queue, callback, options = {}) {
   console.log(`Consumindo da fila: ${queue}`);
 }
 
+async function consumeQueueBatch(queue, callback, options = {}) {
+  const ch = await connectQueue();
+  const batchSize = options.batchSize || 50;
+  const batchTimeoutMs = options.batchTimeoutMs || 100;
+  let batch = [];
+  let batchTimer = null;
+
+  if (options.prefetch) {
+    await ch.prefetch(options.prefetch);
+  }
+
+  async function processBatch() {
+    if (batch.length === 0) return;
+
+    const currentBatch = [...batch];
+    batch = [];
+
+    if (batchTimer) {
+      clearTimeout(batchTimer);
+      batchTimer = null;
+    }
+
+    try {
+      await callback(currentBatch);
+      currentBatch.forEach((msg) => ch.ack(msg));
+      console.log(`Batch de ${currentBatch.length} mensagens processado com sucesso`);
+    } catch (error) {
+      console.error('Erro ao processar batch:', error.message);
+      currentBatch.forEach((msg) => ch.nack(msg, false, false));
+    }
+  }
+
+  function scheduleBatchProcessing() {
+    if (batchTimer) return;
+    batchTimer = setTimeout(async () => {
+      batchTimer = null;
+      await processBatch();
+    }, batchTimeoutMs);
+  }
+
+  await ch.consume(queue, async (msg) => {
+    if (msg) {
+      batch.push(msg);
+
+      if (batch.length >= batchSize) {
+        await processBatch();
+      } else {
+        scheduleBatchProcessing();
+      }
+    }
+  });
+
+  console.log(`Consumindo da fila em batch: ${queue} (batchSize: ${batchSize}, timeout: ${batchTimeoutMs}ms)`);
+}
+
 async function closeConnection() {
   if (channel) {
     await channel.close();
@@ -118,6 +173,7 @@ module.exports = {
   connectQueue,
   publishToQueue,
   consumeQueue,
+  consumeQueueBatch,
   closeConnection,
   testQueueConnection,
   QUEUES,
