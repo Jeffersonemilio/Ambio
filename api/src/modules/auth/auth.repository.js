@@ -122,6 +122,58 @@ class AuthRepository {
     );
     return result.rows.map(row => row.module);
   }
+
+  // Profile Update
+  async updateUserProfile(userId, data) {
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (data.name !== undefined) {
+      fields.push(`name = $${paramIndex++}`);
+      values.push(data.name);
+    }
+
+    if (data.avatarUrl !== undefined) {
+      fields.push(`avatar_url = $${paramIndex++}`);
+      values.push(data.avatarUrl);
+    }
+
+    if (data.preferences !== undefined) {
+      fields.push(`preferences = $${paramIndex++}`);
+      values.push(JSON.stringify(data.preferences));
+    }
+
+    if (fields.length === 0) {
+      return null;
+    }
+
+    fields.push(`updated_at = NOW()`);
+    values.push(userId);
+
+    const result = await query(
+      `UPDATE users SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+      values
+    );
+
+    return result.rows[0] || null;
+  }
+
+  async getUserAvatarUrl(userId) {
+    const result = await query(
+      'SELECT avatar_url FROM users WHERE id = $1',
+      [userId]
+    );
+    return result.rows[0]?.avatar_url || null;
+  }
+
+  async getUserPreferences(userId) {
+    const result = await query(
+      'SELECT preferences FROM users WHERE id = $1',
+      [userId]
+    );
+    return result.rows[0]?.preferences || {};
+  }
 }
 
 module.exports = new AuthRepository();

@@ -1,4 +1,5 @@
 const authService = require('./auth.service');
+const { deleteAvatarFile, getFilenameFromUrl } = require('../../shared/middlewares/upload.middleware');
 
 class AuthController {
   async login(req, res) {
@@ -137,6 +138,112 @@ class AuthController {
     } catch (error) {
       console.error('Erro no me:', error.message);
       res.status(500).json({ error: 'Erro ao buscar dados do usuário' });
+    }
+  }
+
+  async updateProfile(req, res) {
+    try {
+      const { name } = req.body;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const result = await authService.updateProfile(req.user.sub, { name }, ipAddress);
+      res.json(result);
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error.message);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async uploadAvatar(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+      }
+
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+      const result = await authService.updateAvatar(req.user.sub, avatarUrl, ipAddress);
+
+      // Deletar avatar antigo se existir
+      if (result.oldAvatarUrl) {
+        const oldFilename = getFilenameFromUrl(result.oldAvatarUrl);
+        deleteAvatarFile(oldFilename);
+      }
+
+      res.json({ user: result.user, avatarUrl });
+    } catch (error) {
+      console.error('Erro ao fazer upload do avatar:', error.message);
+      // Se houve erro, deletar o arquivo que foi uploaded
+      if (req.file) {
+        deleteAvatarFile(req.file.filename);
+      }
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async removeAvatar(req, res) {
+    try {
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const result = await authService.removeAvatar(req.user.sub, ipAddress);
+
+      // Deletar arquivo físico
+      if (result.oldAvatarUrl) {
+        const oldFilename = getFilenameFromUrl(result.oldAvatarUrl);
+        deleteAvatarFile(oldFilename);
+      }
+
+      res.json({ user: result.user });
+    } catch (error) {
+      console.error('Erro ao remover avatar:', error.message);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async changePassword(req, res) {
+    try {
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Senha atual e nova senha são obrigatórias' });
+      }
+
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const result = await authService.changePassword(
+        req.user.sub,
+        currentPassword,
+        newPassword,
+        ipAddress
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error('Erro ao alterar senha:', error.message);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async getPreferences(req, res) {
+    try {
+      const result = await authService.getPreferences(req.user.sub);
+      res.json(result);
+    } catch (error) {
+      console.error('Erro ao buscar preferências:', error.message);
+      res.status(500).json({ error: 'Erro ao buscar preferências' });
+    }
+  }
+
+  async updatePreferences(req, res) {
+    try {
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const result = await authService.updatePreferences(req.user.sub, req.body, ipAddress);
+      res.json(result);
+    } catch (error) {
+      console.error('Erro ao atualizar preferências:', error.message);
+      res.status(400).json({ error: error.message });
     }
   }
 }

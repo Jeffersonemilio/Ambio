@@ -14,6 +14,8 @@ import { CompaniesList } from './pages/companies/CompaniesList';
 import { CompanyForm } from './pages/companies/CompanyForm';
 import { CompanyDetail } from './pages/companies/CompanyDetail';
 import { SensorAssignment } from './pages/sensors/SensorAssignment';
+import { UserProfile } from './pages/profile/UserProfile';
+import { CompanyProfile } from './pages/company/CompanyProfile';
 
 function App() {
   return (
@@ -43,6 +45,8 @@ function App() {
                   <Route path="/companies/new" element={<CompanyForm />} />
                   <Route path="/companies/:id" element={<CompanyDetail />} />
                   <Route path="/companies/:id/edit" element={<CompanyForm />} />
+                  <Route path="/profile" element={<UserProfile />} />
+                  <Route path="/company/profile" element={<CompanyProfile />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

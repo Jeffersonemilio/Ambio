@@ -284,7 +284,166 @@ class AuthService {
       emailVerified: user.email_verified,
       lastLoginAt: user.last_login_at,
       createdAt: user.created_at,
+      avatarUrl: user.avatar_url,
+      preferences: user.preferences || {},
     };
+  }
+
+  // Profile Management
+  async updateProfile(userId, data, ipAddress) {
+    const allowedFields = ['name'];
+    const updateData = {};
+
+    for (const field of allowedFields) {
+      if (data[field] !== undefined) {
+        updateData[field] = data[field];
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      throw new Error('Nenhum campo válido para atualizar');
+    }
+
+    // Validação do nome
+    if (updateData.name !== undefined) {
+      if (typeof updateData.name !== 'string' || updateData.name.trim().length < 2) {
+        throw new Error('Nome deve ter no mínimo 2 caracteres');
+      }
+      updateData.name = updateData.name.trim();
+    }
+
+    const updatedUser = await authRepository.updateUserProfile(userId, updateData);
+
+    if (!updatedUser) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    await auditService.log({
+      userId,
+      action: 'profile_update',
+      resourceType: 'user',
+      resourceId: userId,
+      details: { fields: Object.keys(updateData) },
+      ipAddress,
+    });
+
+    return this.sanitizeUser(updatedUser);
+  }
+
+  async updateAvatar(userId, avatarUrl, ipAddress) {
+    const oldAvatarUrl = await authRepository.getUserAvatarUrl(userId);
+
+    const updatedUser = await authRepository.updateUserProfile(userId, { avatarUrl });
+
+    if (!updatedUser) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    await auditService.log({
+      userId,
+      action: 'avatar_update',
+      resourceType: 'user',
+      resourceId: userId,
+      ipAddress,
+    });
+
+    return {
+      user: this.sanitizeUser(updatedUser),
+      oldAvatarUrl,
+    };
+  }
+
+  async removeAvatar(userId, ipAddress) {
+    const oldAvatarUrl = await authRepository.getUserAvatarUrl(userId);
+
+    if (!oldAvatarUrl) {
+      throw new Error('Usuário não possui avatar');
+    }
+
+    const updatedUser = await authRepository.updateUserProfile(userId, { avatarUrl: null });
+
+    await auditService.log({
+      userId,
+      action: 'avatar_remove',
+      resourceType: 'user',
+      resourceId: userId,
+      ipAddress,
+    });
+
+    return {
+      user: this.sanitizeUser(updatedUser),
+      oldAvatarUrl,
+    };
+  }
+
+  async changePassword(userId, currentPassword, newPassword, ipAddress) {
+    const user = await authRepository.findUserById(userId);
+
+    if (!user) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    // Validar senha atual
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isValidPassword) {
+      throw new Error('Senha atual incorreta');
+    }
+
+    // Validar nova senha
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error('Nova senha deve ter no mínimo 8 caracteres');
+    }
+
+    // Atualizar senha
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await authRepository.updateUserPassword(userId, passwordHash);
+
+    // Revogar todos os refresh tokens (exceto o atual seria ideal, mas por segurança revogamos todos)
+    await authRepository.revokeAllUserRefreshTokens(userId);
+
+    await auditService.log({
+      userId,
+      action: 'password_change',
+      resourceType: 'auth',
+      resourceId: userId,
+      ipAddress,
+    });
+
+    return { message: 'Senha alterada com sucesso' };
+  }
+
+  async getPreferences(userId) {
+    const preferences = await authRepository.getUserPreferences(userId);
+    return preferences;
+  }
+
+  async updatePreferences(userId, preferences, ipAddress) {
+    // Validar estrutura das preferências
+    const validPreferences = {
+      notifications: {
+        sensor_alerts: preferences?.notifications?.sensor_alerts ?? true,
+        periodic_reports: preferences?.notifications?.periodic_reports ?? true,
+        system_updates: preferences?.notifications?.system_updates ?? false,
+      },
+    };
+
+    const updatedUser = await authRepository.updateUserProfile(userId, {
+      preferences: validPreferences,
+    });
+
+    if (!updatedUser) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    await auditService.log({
+      userId,
+      action: 'preferences_update',
+      resourceType: 'user',
+      resourceId: userId,
+      ipAddress,
+    });
+
+    return validPreferences;
   }
 }
 

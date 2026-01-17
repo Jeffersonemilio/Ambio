@@ -2,6 +2,7 @@ const { Router } = require('express');
 const authController = require('./auth.controller');
 const { authenticate } = require('../../shared/middlewares/auth.middleware');
 const { requirePermission } = require('../../shared/middlewares/permission.middleware');
+const { uploadAvatar } = require('../../shared/middlewares/upload.middleware');
 const { canImpersonate } = require('../../config/roles');
 
 const router = Router();
@@ -303,5 +304,211 @@ router.post('/admin-reset-password',
   requirePermission('users.management:write'),
   (req, res) => authController.adminResetPassword(req, res)
 );
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   put:
+ *     tags: [Auth]
+ *     summary: Atualizar perfil próprio
+ *     description: Permite ao usuário atualizar seu próprio nome
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 2
+ *                 example: "João Silva"
+ *     responses:
+ *       200:
+ *         description: Perfil atualizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Dados inválidos
+ *       401:
+ *         description: Não autenticado
+ */
+router.put('/me', authenticate, (req, res) => authController.updateProfile(req, res));
+
+/**
+ * @swagger
+ * /api/auth/me/avatar:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Upload de avatar
+ *     description: Faz upload de uma imagem de avatar para o usuário
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: Imagem JPG, PNG ou WebP (máx 2MB)
+ *     responses:
+ *       200:
+ *         description: Avatar atualizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 avatarUrl:
+ *                   type: string
+ *       400:
+ *         description: Arquivo inválido ou erro no upload
+ *       401:
+ *         description: Não autenticado
+ */
+router.post('/me/avatar', authenticate, uploadAvatar.single('avatar'), (req, res) => authController.uploadAvatar(req, res));
+
+/**
+ * @swagger
+ * /api/auth/me/avatar:
+ *   delete:
+ *     tags: [Auth]
+ *     summary: Remover avatar
+ *     description: Remove o avatar do usuário
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Avatar removido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Usuário não possui avatar
+ *       401:
+ *         description: Não autenticado
+ */
+router.delete('/me/avatar', authenticate, (req, res) => authController.removeAvatar(req, res));
+
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Alterar senha própria
+ *     description: Permite ao usuário alterar sua própria senha
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 format: password
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 8
+ *     responses:
+ *       200:
+ *         description: Senha alterada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Senha atual incorreta ou nova senha inválida
+ *       401:
+ *         description: Não autenticado
+ */
+router.post('/change-password', authenticate, (req, res) => authController.changePassword(req, res));
+
+/**
+ * @swagger
+ * /api/auth/me/preferences:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Obter preferências do usuário
+ *     description: Retorna as preferências de notificação do usuário
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Preferências do usuário
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 notifications:
+ *                   type: object
+ *                   properties:
+ *                     sensor_alerts:
+ *                       type: boolean
+ *                     periodic_reports:
+ *                       type: boolean
+ *                     system_updates:
+ *                       type: boolean
+ *       401:
+ *         description: Não autenticado
+ */
+router.get('/me/preferences', authenticate, (req, res) => authController.getPreferences(req, res));
+
+/**
+ * @swagger
+ * /api/auth/me/preferences:
+ *   put:
+ *     tags: [Auth]
+ *     summary: Atualizar preferências do usuário
+ *     description: Atualiza as preferências de notificação do usuário
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               notifications:
+ *                 type: object
+ *                 properties:
+ *                   sensor_alerts:
+ *                     type: boolean
+ *                   periodic_reports:
+ *                     type: boolean
+ *                   system_updates:
+ *                     type: boolean
+ *     responses:
+ *       200:
+ *         description: Preferências atualizadas
+ *       400:
+ *         description: Dados inválidos
+ *       401:
+ *         description: Não autenticado
+ */
+router.put('/me/preferences', authenticate, (req, res) => authController.updatePreferences(req, res));
 
 module.exports = router;

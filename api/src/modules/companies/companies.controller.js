@@ -157,6 +157,104 @@ class CompaniesController {
       res.status(500).json({ error: 'Erro ao buscar sensores' });
     }
   }
+
+  // =====================
+  // MY COMPANY - Endpoints de auto-serviço
+  // =====================
+
+  async getMyCompany(req, res) {
+    try {
+      const company = await companiesService.getMyCompany(req.user);
+      res.json(company);
+    } catch (error) {
+      console.error('Erro ao buscar minha empresa:', error.message);
+      if (error.message === 'Empresa não encontrada') {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async updateMyCompany(req, res) {
+    try {
+      const { name, email, phone } = req.body;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const company = await companiesService.updateMyCompany(
+        { name, email, phone },
+        req.user,
+        ipAddress
+      );
+
+      res.json(company);
+    } catch (error) {
+      console.error('Erro ao atualizar minha empresa:', error.message);
+      if (error.message === 'Empresa não encontrada') {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async getMyCompanyUsers(req, res) {
+    try {
+      const { limit = 50, offset = 0 } = req.query;
+
+      const result = await companiesService.getMyCompanyUsers(
+        {
+          limit: Math.min(parseInt(limit, 10) || 50, 100),
+          offset: parseInt(offset, 10) || 0,
+        },
+        req.user
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error('Erro ao buscar usuários da minha empresa:', error.message);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async createMyCompanyUser(req, res) {
+    try {
+      const { email, name, role } = req.body;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const user = await companiesService.createMyCompanyUser(
+        { email, name, role },
+        req.user,
+        ipAddress
+      );
+
+      res.status(201).json(user);
+    } catch (error) {
+      console.error('Erro ao criar usuário na empresa:', error.message);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async updateMyCompanyUser(req, res) {
+    try {
+      const { userId } = req.params;
+      const { name, role, isActive } = req.body;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+
+      const user = await companiesService.updateMyCompanyUser(
+        userId,
+        { name, role, isActive },
+        req.user,
+        ipAddress
+      );
+
+      res.json(user);
+    } catch (error) {
+      console.error('Erro ao atualizar usuário da empresa:', error.message);
+      if (error.message === 'Usuário não encontrado') {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(400).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = new CompaniesController();

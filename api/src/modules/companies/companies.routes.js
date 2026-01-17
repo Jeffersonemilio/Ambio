@@ -8,6 +8,241 @@ const router = Router();
 // Todas as rotas requerem autenticação
 router.use(authenticate);
 
+// =====================
+// MY COMPANY - Rotas de auto-serviço (devem vir antes de /:id)
+// =====================
+
+/**
+ * @swagger
+ * /api/companies/my-company:
+ *   get:
+ *     tags: [Companies]
+ *     summary: Obter minha empresa
+ *     description: Retorna os dados da empresa do usuário logado (apenas para usuários do tipo company)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dados da empresa
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Company'
+ *       400:
+ *         description: Usuário não é do tipo empresa
+ *       404:
+ *         description: Empresa não encontrada
+ */
+router.get('/my-company',
+  (req, res) => companiesController.getMyCompany(req, res)
+);
+
+/**
+ * @swagger
+ * /api/companies/my-company:
+ *   put:
+ *     tags: [Companies]
+ *     summary: Atualizar minha empresa
+ *     description: Atualiza dados da empresa do usuário logado (apenas para admins da empresa)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Nova Razão Social"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "contato@empresa.com"
+ *               phone:
+ *                 type: string
+ *                 example: "(11) 99999-9999"
+ *     responses:
+ *       200:
+ *         description: Empresa atualizada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Company'
+ *       400:
+ *         description: Dados inválidos ou sem permissão
+ *       404:
+ *         description: Empresa não encontrada
+ */
+router.put('/my-company',
+  (req, res) => companiesController.updateMyCompany(req, res)
+);
+
+/**
+ * @swagger
+ * /api/companies/my-company/users:
+ *   get:
+ *     tags: [Companies]
+ *     summary: Listar usuários da minha empresa
+ *     description: Retorna lista de usuários da empresa do usuário logado (admin e analyst)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Lista de usuários
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *                 total:
+ *                   type: integer
+ *       400:
+ *         description: Sem permissão
+ */
+router.get('/my-company/users',
+  (req, res) => companiesController.getMyCompanyUsers(req, res)
+);
+
+/**
+ * @swagger
+ * /api/companies/my-company/users:
+ *   post:
+ *     tags: [Companies]
+ *     summary: Criar usuário na minha empresa
+ *     description: Cria um novo usuário vinculado à empresa do usuário logado (apenas admin)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, name, role]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "novo.usuario@empresa.com"
+ *               name:
+ *                 type: string
+ *                 example: "João Silva"
+ *               role:
+ *                 type: string
+ *                 enum: [admin, analyst, user]
+ *                 example: "analyst"
+ *     responses:
+ *       201:
+ *         description: Usuário criado (senha temporária enviada por email)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   format: uuid
+ *                 email:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                 isActive:
+ *                   type: boolean
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Dados inválidos ou sem permissão
+ */
+router.post('/my-company/users',
+  (req, res) => companiesController.createMyCompanyUser(req, res)
+);
+
+/**
+ * @swagger
+ * /api/companies/my-company/users/{userId}:
+ *   put:
+ *     tags: [Companies]
+ *     summary: Atualizar usuário da minha empresa
+ *     description: Atualiza dados de um usuário da empresa (apenas admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "João Silva Atualizado"
+ *               role:
+ *                 type: string
+ *                 enum: [admin, analyst, user]
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Usuário atualizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   format: uuid
+ *                 email:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                 isActive:
+ *                   type: boolean
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Dados inválidos ou sem permissão
+ *       404:
+ *         description: Usuário não encontrado
+ */
+router.put('/my-company/users/:userId',
+  (req, res) => companiesController.updateMyCompanyUser(req, res)
+);
+
+// =====================
+// ADMIN ROUTES - Gerenciamento de empresas (requer permissão)
+// =====================
+
 /**
  * @swagger
  * /api/companies:
