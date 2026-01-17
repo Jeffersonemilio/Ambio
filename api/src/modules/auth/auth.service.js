@@ -3,10 +3,12 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const authRepository = require('./auth.repository');
 const auditService = require('../audit/audit.service');
+const emailService = require('../email/email.service');
 const { getRolePermissions } = require('../../config/roles');
 const config = require('../../config');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'ambio-secret-key-change-in-production';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const JWT_EXPIRES_IN = '15m';
 const REFRESH_TOKEN_EXPIRES_DAYS = 7;
 
@@ -128,14 +130,12 @@ class AuthService {
 
     await authRepository.createPasswordReset(user.id, tokenHash, expiresAt);
 
-    // TODO: Enviar email com o token
-    // Por enquanto, retorna o token para testes
-    console.log(`Reset token para ${email}: ${resetToken}`);
+    // Enviar email com o link de reset
+    const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
+    await emailService.sendPasswordReset(user, resetLink);
 
     return {
       message: 'Se o email existir, você receberá instruções de recuperação',
-      // Remover em produção:
-      _devToken: resetToken,
     };
   }
 
@@ -184,13 +184,11 @@ class AuthService {
       ipAddress,
     });
 
-    // TODO: Enviar email com a senha temporária
-    console.log(`Senha temporária para ${targetUser.email}: ${tempPassword}`);
+    // Enviar email com a senha temporária
+    await emailService.sendTempPassword(targetUser, tempPassword);
 
     return {
       message: 'Senha resetada com sucesso',
-      // Remover em produção:
-      _devTempPassword: tempPassword,
     };
   }
 
