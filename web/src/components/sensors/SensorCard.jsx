@@ -1,17 +1,17 @@
 import { Link } from 'react-router-dom';
-import { Thermometer, Droplets, Battery, Clock } from 'lucide-react';
+import { Thermometer, Droplets, Clock } from 'lucide-react';
 import { Card } from '../common/Card';
 import { BatteryBadge } from '../common/Badge';
 import { formatTemperature, formatHumidity, formatRelativeTime } from '../../utils/formatters';
 
-export function SensorCard({ sensor }) {
+export function SensorCard({ sensor, basePath = '/sensors' }) {
   const temperature = sensor.last_temperature ?? sensor.temperature;
   const humidity = sensor.last_humidity ?? sensor.humidity;
   const batteryLevel = sensor.last_battery_level ?? sensor.battery_level;
   const readingAt = sensor.last_reading_at ?? sensor.received_at;
 
   return (
-    <Link to={`/sensors/${sensor.serial_number}`}>
+    <Link to={`${basePath}/${sensor.serial_number}`}>
       <Card className="hover:shadow-md transition-shadow cursor-pointer">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-900 truncate">{sensor.serial_number}</h3>

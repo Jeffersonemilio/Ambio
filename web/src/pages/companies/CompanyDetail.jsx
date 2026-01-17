@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
   Edit,
@@ -16,18 +16,20 @@ import { Loading } from '../../components/common/Loading';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { Table } from '../../components/common/Table';
 import { Pagination } from '../../components/common/Pagination';
+import { StatCard } from '../../components/common/StatCard';
+import { SensorStatsOverview } from '../../components/dashboard/StatsOverview';
+import { RecentReadingsChart } from '../../components/dashboard/RecentReadingsChart';
+import { SensorList } from '../../components/sensors/SensorList';
 import { useCompany, useCompanyUsers, useCompanySensors } from '../../hooks/useCompanies';
-import { formatDate, formatTemperature, formatHumidity } from '../../utils/formatters';
 
 export function CompanyDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('sensors');
   const [usersPagination, setUsersPagination] = useState({ limit: 10, offset: 0 });
-  const [sensorsPagination, setSensorsPagination] = useState({ limit: 10, offset: 0 });
 
   const { data: company, isLoading, error } = useCompany(id);
   const { data: usersData, isLoading: usersLoading } = useCompanyUsers(id, usersPagination);
-  const { data: sensorsData, isLoading: sensorsLoading } = useCompanySensors(id, sensorsPagination);
+  const { data: sensorsData, isLoading: sensorsLoading } = useCompanySensors(id, { limit: 100 });
 
   if (isLoading) return <Loading />;
   if (error) return <ErrorMessage message="Erro ao carregar empresa." />;
@@ -36,7 +38,7 @@ export function CompanyDetail() {
   const users = usersData?.data || [];
   const usersTotal = usersData?.total || 0;
   const sensors = sensorsData?.data || [];
-  const sensorsTotal = sensorsData?.total || 0;
+  const sensorsTotal = sensorsData?.total || sensors.length;
 
   const userColumns = [
     {
@@ -92,48 +94,19 @@ export function CompanyDetail() {
     },
   ];
 
-  const sensorColumns = [
-    {
-      key: 'serial_number',
-      label: 'Serial',
-      render: (row) => (
-        <Link
-          to={`/sensors/${row.serial_number}`}
-          className="font-medium text-blue-600 hover:text-blue-800"
-        >
-          {row.serial_number}
-        </Link>
-      ),
-    },
-    {
-      key: 'name',
-      label: 'Nome',
-      render: (row) => row.name || '-',
-    },
-    {
-      key: 'last_temperature',
-      label: 'Temp.',
-      render: (row) => formatTemperature(row.last_temperature),
-    },
-    {
-      key: 'last_humidity',
-      label: 'Umidade',
-      render: (row) => formatHumidity(row.last_humidity),
-    },
-    {
-      key: 'last_reading_at',
-      label: 'Última leitura',
-      render: (row) =>
-        row.last_reading_at ? formatDate(row.last_reading_at) : '-',
-    },
+  const tabs = [
+    { id: 'sensors', label: 'Sensores', count: sensorsTotal },
+    { id: 'users', label: 'Usuários', count: usersTotal },
+    { id: 'info', label: 'Informações' },
   ];
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
-            to="/companies"
+            to="/"
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -153,135 +126,141 @@ export function CompanyDetail() {
         </Link>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Users className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Usuários</p>
-              <p className="text-2xl font-bold">{usersTotal}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <Radio className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Sensores</p>
-              <p className="text-2xl font-bold">{sensorsTotal}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="flex items-center gap-3">
-            <div
-              className={`p-3 rounded-lg ${
-                company.is_active ? 'bg-green-100' : 'bg-gray-100'
-              }`}
-            >
-              <Building2
-                className={`w-6 h-6 ${
-                  company.is_active ? 'text-green-600' : 'text-gray-600'
-                }`}
-              />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Status</p>
-              <p className="text-lg font-semibold">
-                {company.is_active ? 'Ativa' : 'Inativa'}
-              </p>
-            </div>
-          </div>
-        </Card>
+        <StatCard
+          icon={Radio}
+          label="Sensores"
+          value={sensorsTotal}
+          iconBgColor="bg-blue-500"
+        />
+        <StatCard
+          icon={Users}
+          label="Usuários"
+          value={usersTotal}
+          iconBgColor="bg-green-500"
+        />
+        <StatCard
+          icon={Building2}
+          label="Status"
+          value={company.is_active ? 'Ativa' : 'Inativa'}
+          iconBgColor={company.is_active ? 'bg-green-500' : 'bg-gray-500'}
+        />
       </div>
 
-      {(company.email || company.phone || company.address) && (
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+              {tab.count !== undefined && (
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100">
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'sensors' && (
+        <div className="space-y-6">
+          <SensorStatsOverview sensors={sensors} />
+
+          {sensors.length > 0 && (
+            <RecentReadingsChart
+              sensorId={sensors[0]?.serial_number}
+              limit={50}
+              title="Leituras Recentes"
+            />
+          )}
+
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Sensores ({sensorsTotal})
+            </h2>
+            <SensorList sensors={sensors} isLoading={sensorsLoading} />
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'users' && (
+        <Card>
+          <CardHeader
+            title="Usuários"
+            subtitle={`${usersTotal} usuário${usersTotal !== 1 ? 's' : ''}`}
+          />
+          {usersLoading ? (
+            <div className="p-8">
+              <Loading />
+            </div>
+          ) : (
+            <>
+              <Table
+                columns={userColumns}
+                data={users}
+                emptyMessage="Nenhum usuário cadastrado."
+              />
+              <Pagination
+                total={usersTotal}
+                limit={usersPagination.limit}
+                offset={usersPagination.offset}
+                onChange={(offset) =>
+                  setUsersPagination((prev) => ({ ...prev, offset }))
+                }
+              />
+            </>
+          )}
+        </Card>
+      )}
+
+      {activeTab === 'info' && (
         <Card>
           <CardHeader title="Informações de Contato" />
-          <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 space-y-4">
             {company.email && (
-              <div className="flex items-center gap-2 text-gray-600">
-                <Mail className="w-4 h-4" />
-                <span>{company.email}</span>
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium">{company.email}</p>
+                </div>
               </div>
             )}
             {company.phone && (
-              <div className="flex items-center gap-2 text-gray-600">
-                <Phone className="w-4 h-4" />
-                <span>{company.phone}</span>
+              <div className="flex items-center gap-3">
+                <Phone className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-500">Telefone</p>
+                  <p className="font-medium">{company.phone}</p>
+                </div>
               </div>
             )}
             {company.address && (
-              <div className="flex items-center gap-2 text-gray-600">
-                <MapPin className="w-4 h-4" />
-                <span>{company.address}</span>
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-500">Endereço</p>
+                  <p className="font-medium">{company.address}</p>
+                </div>
               </div>
+            )}
+            {!company.email && !company.phone && !company.address && (
+              <p className="text-gray-500">Nenhuma informação de contato cadastrada.</p>
             )}
           </div>
         </Card>
       )}
-
-      <Card>
-        <CardHeader
-          title="Usuários"
-          subtitle={`${usersTotal} usuário${usersTotal !== 1 ? 's' : ''}`}
-        />
-        {usersLoading ? (
-          <div className="p-8">
-            <Loading />
-          </div>
-        ) : (
-          <>
-            <Table
-              columns={userColumns}
-              data={users}
-              emptyMessage="Nenhum usuário cadastrado."
-            />
-            <Pagination
-              total={usersTotal}
-              limit={usersPagination.limit}
-              offset={usersPagination.offset}
-              onChange={(offset) =>
-                setUsersPagination((prev) => ({ ...prev, offset }))
-              }
-            />
-          </>
-        )}
-      </Card>
-
-      <Card>
-        <CardHeader
-          title="Sensores"
-          subtitle={`${sensorsTotal} sensor${sensorsTotal !== 1 ? 'es' : ''}`}
-        />
-        {sensorsLoading ? (
-          <div className="p-8">
-            <Loading />
-          </div>
-        ) : (
-          <>
-            <Table
-              columns={sensorColumns}
-              data={sensors}
-              emptyMessage="Nenhum sensor atribuído."
-            />
-            <Pagination
-              total={sensorsTotal}
-              limit={sensorsPagination.limit}
-              offset={sensorsPagination.offset}
-              onChange={(offset) =>
-                setSensorsPagination((prev) => ({ ...prev, offset }))
-              }
-            />
-          </>
-        )}
-      </Card>
     </div>
   );
 }
