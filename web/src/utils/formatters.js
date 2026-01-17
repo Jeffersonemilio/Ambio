@@ -10,11 +10,17 @@ export function formatRelativeTime(date) {
 }
 
 export function formatTemperature(value) {
-  return `${Number(value).toFixed(1)}°C`;
+  if (value == null) return '--°C';
+  const num = Number(value);
+  if (isNaN(num)) return '--°C';
+  return `${num.toFixed(1)}°C`;
 }
 
 export function formatHumidity(value) {
-  return `${Number(value).toFixed(1)}%`;
+  if (value == null) return '--%';
+  const num = Number(value);
+  if (isNaN(num)) return '--%';
+  return `${num.toFixed(1)}%`;
 }
 
 export function getBatteryColor(level) {

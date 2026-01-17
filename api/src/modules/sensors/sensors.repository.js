@@ -47,10 +47,20 @@ class SensorsRepository {
          c.name as company_name,
          sg.name as group_name,
          (SELECT COUNT(*) FROM temp_hum_readings r WHERE r.serial_number = s.serial_number) as reading_count,
-         (SELECT MAX(received_at) FROM temp_hum_readings r WHERE r.serial_number = s.serial_number) as last_reading_at
+         lr.received_at as last_reading_at,
+         lr.temperature as last_temperature,
+         lr.humidity as last_humidity,
+         lr.battery_level as last_battery_level
        FROM sensors s
        LEFT JOIN companies c ON s.company_id = c.id
        LEFT JOIN sensor_groups sg ON s.group_id = sg.id
+       LEFT JOIN LATERAL (
+         SELECT received_at, temperature, humidity, battery_level
+         FROM temp_hum_readings r
+         WHERE r.serial_number = s.serial_number
+         ORDER BY received_at DESC
+         LIMIT 1
+       ) lr ON true
        ${whereClause}
        ORDER BY s.created_at DESC
        LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
@@ -72,10 +82,20 @@ class SensorsRepository {
          c.name as company_name,
          sg.name as group_name,
          (SELECT COUNT(*) FROM temp_hum_readings r WHERE r.serial_number = s.serial_number) as reading_count,
-         (SELECT MAX(received_at) FROM temp_hum_readings r WHERE r.serial_number = s.serial_number) as last_reading_at
+         lr.received_at as last_reading_at,
+         lr.temperature as last_temperature,
+         lr.humidity as last_humidity,
+         lr.battery_level as last_battery_level
        FROM sensors s
        LEFT JOIN companies c ON s.company_id = c.id
        LEFT JOIN sensor_groups sg ON s.group_id = sg.id
+       LEFT JOIN LATERAL (
+         SELECT received_at, temperature, humidity, battery_level
+         FROM temp_hum_readings r
+         WHERE r.serial_number = s.serial_number
+         ORDER BY received_at DESC
+         LIMIT 1
+       ) lr ON true
        WHERE s.id = $1`,
       [id]
     );
