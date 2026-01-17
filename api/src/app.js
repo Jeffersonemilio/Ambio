@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 const helloRoutes = require('./routes/hello');
@@ -7,6 +8,16 @@ const readingsRoutes = require('./routes/readings');
 const sensorsRoutes = require('./routes/sensors');
 
 const app = express();
+
+// CORS configuration for frontend
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    /\.vercel\.app$/
+  ],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
 
