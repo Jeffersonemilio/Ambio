@@ -341,6 +341,96 @@ class SensorsService {
 
     return count;
   }
+
+  // Configurações de sensores
+  async getConfiguration(sensorId, requestingUser) {
+    const sensor = await sensorsRepository.findById(sensorId);
+
+    if (!sensor) {
+      throw new Error('Sensor não encontrado');
+    }
+
+    // Verificar acesso
+    if (requestingUser.userType === 'company' && sensor.company_id !== requestingUser.companyId) {
+      throw new Error('Acesso negado');
+    }
+
+    return sensorsRepository.findConfigurationBySensorId(sensorId);
+  }
+
+  async updateConfiguration(sensorId, config, requestingUser, ipAddress) {
+    const sensor = await sensorsRepository.findById(sensorId);
+
+    if (!sensor) {
+      throw new Error('Sensor não encontrado');
+    }
+
+    // Apenas sensores atribuídos a empresas podem ser configurados
+    if (!sensor.company_id) {
+      throw new Error('Sensor não está atribuído a nenhuma empresa');
+    }
+
+    // Verificar acesso
+    if (requestingUser.userType === 'company' && sensor.company_id !== requestingUser.companyId) {
+      throw new Error('Acesso negado');
+    }
+
+    // Validações de negócio
+    this.validateThresholds(config);
+
+    const configuration = await sensorsRepository.upsertConfiguration(
+      sensorId,
+      config,
+      requestingUser.sub
+    );
+
+    await auditService.log({
+      userId: requestingUser.sub,
+      action: 'configure',
+      resourceType: 'sensor',
+      resourceId: sensorId,
+      details: { configuration: config },
+      ipAddress,
+    });
+
+    return configuration;
+  }
+
+  validateThresholds(config) {
+    const { temperatureMin, temperatureMax, humidityMin, humidityMax } = config;
+
+    // Validar range de temperatura
+    if (temperatureMin !== null && temperatureMin !== undefined &&
+        temperatureMax !== null && temperatureMax !== undefined) {
+      if (temperatureMin >= temperatureMax) {
+        throw new Error('Temperatura mínima deve ser menor que máxima');
+      }
+    }
+
+    // Validar range de umidade
+    if (humidityMin !== null && humidityMin !== undefined &&
+        humidityMax !== null && humidityMax !== undefined) {
+      if (humidityMin >= humidityMax) {
+        throw new Error('Umidade mínima deve ser menor que máxima');
+      }
+    }
+
+    // Validar valores de umidade (0-100%)
+    if (humidityMin !== null && humidityMin !== undefined && (humidityMin < 0 || humidityMin > 100)) {
+      throw new Error('Umidade mínima deve estar entre 0 e 100%');
+    }
+    if (humidityMax !== null && humidityMax !== undefined && (humidityMax < 0 || humidityMax > 100)) {
+      throw new Error('Umidade máxima deve estar entre 0 e 100%');
+    }
+
+    // Validar valores razoáveis de temperatura (-50 a 100 C)
+    if (temperatureMin !== null && temperatureMin !== undefined && (temperatureMin < -50 || temperatureMin > 100)) {
+      throw new Error('Temperatura mínima deve estar entre -50 e 100 graus');
+    }
+    if (temperatureMax !== null && temperatureMax !== undefined && (temperatureMax < -50 || temperatureMax > 100)) {
+      throw new Error('Temperatura máxima deve estar entre -50 e 100 graus');
+    }
+  }
 }
 
 module.exports = new SensorsService();

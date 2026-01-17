@@ -276,6 +276,115 @@ router.put('/:id/unassign',
 
 /**
  * @swagger
+ * /api/sensors/{id}/configuration:
+ *   get:
+ *     tags: [Sensors]
+ *     summary: Obter configuração do sensor
+ *     description: Retorna limites de temperatura/umidade e local de instalação
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Configuração do sensor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sensor_id:
+ *                   type: string
+ *                   format: uuid
+ *                 installation_location:
+ *                   type: string
+ *                   example: "Câmara Fria 01"
+ *                 temperature_min:
+ *                   type: number
+ *                   example: 2.0
+ *                 temperature_max:
+ *                   type: number
+ *                   example: 8.0
+ *                 humidity_min:
+ *                   type: number
+ *                   example: 40.0
+ *                 humidity_max:
+ *                   type: number
+ *                   example: 60.0
+ *                 alerts_enabled:
+ *                   type: boolean
+ *                   default: true
+ *                 configured:
+ *                   type: boolean
+ *       404:
+ *         description: Sensor não encontrado
+ */
+router.get('/:id/configuration',
+  requirePermission('sensors.management:read'),
+  (req, res) => sensorsController.getConfiguration(req, res)
+);
+
+/**
+ * @swagger
+ * /api/sensors/{id}/configuration:
+ *   put:
+ *     tags: [Sensors]
+ *     summary: Atualizar configuração do sensor
+ *     description: Define limites de temperatura/umidade e local de instalação
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               installationLocation:
+ *                 type: string
+ *                 example: "Câmara Fria 01"
+ *               temperatureMin:
+ *                 type: number
+ *                 example: 2.0
+ *               temperatureMax:
+ *                 type: number
+ *                 example: 8.0
+ *               humidityMin:
+ *                 type: number
+ *                 example: 40.0
+ *               humidityMax:
+ *                 type: number
+ *                 example: 60.0
+ *               alertsEnabled:
+ *                 type: boolean
+ *                 default: true
+ *     responses:
+ *       200:
+ *         description: Configuração atualizada
+ *       400:
+ *         description: Erro de validação (ex. min > max)
+ *       404:
+ *         description: Sensor não encontrado
+ */
+router.put('/:id/configuration',
+  requirePermission('sensors.management:write'),
+  (req, res) => sensorsController.updateConfiguration(req, res)
+);
+
+/**
+ * @swagger
  * /api/sensors/groups/{id}:
  *   get:
  *     tags: [Sensor Groups]

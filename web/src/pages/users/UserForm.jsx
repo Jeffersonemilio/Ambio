@@ -11,8 +11,14 @@ import { useUser, useCreateUser, useUpdateUser } from '../../hooks/useUsers';
 import { useCompanies } from '../../hooks/useCompanies';
 import { useAuth } from '../../hooks/useAuth';
 
-const roleOptions = [
+const ambioRoleOptions = [
   { value: 'super_admin', label: 'Super Admin' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'analyst', label: 'Analista' },
+  { value: 'support', label: 'Suporte' },
+];
+
+const companyRoleOptions = [
   { value: 'admin', label: 'Admin' },
   { value: 'analyst', label: 'Analista' },
   { value: 'support', label: 'Suporte' },
@@ -44,8 +50,17 @@ export function UserForm() {
     role: 'user',
   });
   const [errors, setErrors] = useState({});
+  const [isSubmittingLocal, setIsSubmittingLocal] = useState(false);
 
   const isAmbioUser = currentUser?.userType === 'ambio';
+  const isCompanyUser = currentUser?.userType === 'company';
+
+  // Se for usuário de empresa, setar a empresa dele automaticamente
+  useEffect(() => {
+    if (isCompanyUser && currentUser?.companyId && !isEditing) {
+      setFormData((prev) => ({ ...prev, companyId: currentUser.companyId }));
+    }
+  }, [isCompanyUser, currentUser?.companyId, isEditing]);
 
   useEffect(() => {
     if (userData) {
@@ -59,6 +74,14 @@ export function UserForm() {
       });
     }
   }, [userData]);
+
+  // Determinar opções de role baseado no tipo de usuário sendo criado
+  const getRoleOptions = () => {
+    if (formData.userType === 'ambio') {
+      return ambioRoleOptions;
+    }
+    return companyRoleOptions;
+  };
 
   const validate = () => {
     const newErrors = {};
@@ -106,7 +129,11 @@ export function UserForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (isSubmittingLocal) return;
+
     if (!validate()) return;
+
+    setIsSubmittingLocal(true);
 
     const data = {
       name: formData.name,
@@ -137,6 +164,7 @@ export function UserForm() {
     } catch (err) {
       console.error('Erro ao salvar usuário:', err);
       setErrors({ submit: err.message || 'Erro ao salvar usuário' });
+      setIsSubmittingLocal(false);
     }
   };
 
@@ -146,7 +174,7 @@ export function UserForm() {
   const companies = companiesData?.data || [];
   const companyOptions = companies.map((c) => ({ value: c.id, label: c.name }));
 
-  const isSubmitting = createUser.isPending || updateUser.isPending;
+  const isSubmitting = isSubmittingLocal || createUser.isPending || updateUser.isPending;
 
   return (
     <div className="space-y-6">
@@ -221,7 +249,7 @@ export function UserForm() {
               </div>
             )}
 
-            {formData.userType === 'company' && (
+            {formData.userType === 'company' && isAmbioUser && (
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">
                   Empresa <span className="text-red-500">*</span>
@@ -245,7 +273,7 @@ export function UserForm() {
               <Select
                 value={formData.role}
                 onChange={(value) => handleChange('role', value)}
-                options={roleOptions}
+                options={getRoleOptions()}
               />
               {errors.role && (
                 <p className="text-sm text-red-600">{errors.role}</p>

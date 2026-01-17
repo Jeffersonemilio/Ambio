@@ -158,3 +158,14 @@ export function unassignSensor(sensorId) {
     method: 'POST',
   });
 }
+
+export function getSensorConfiguration(sensorId) {
+  return fetchApi(`/api/sensors/${sensorId}/configuration`);
+}
+
+export function updateSensorConfiguration(sensorId, config) {
+  return fetchApi(`/api/sensors/${sensorId}/configuration`, {
+    method: 'PUT',
+    body: JSON.stringify(config),
+  });
+}

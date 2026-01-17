@@ -10,6 +10,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { SearchInput } from '../../components/common/SearchInput';
 import { Select } from '../../components/common/Select';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
+import { SensorConfigurationModal } from '../../components/sensors/SensorConfigurationModal';
 import { useUnassignedSensors, useAssignSensor } from '../../hooks/useSensors';
 import { useCompanies } from '../../hooks/useCompanies';
 import { formatDate } from '../../utils/formatters';
@@ -20,6 +21,7 @@ export function SensorAssignment() {
   const [selectedSensors, setSelectedSensors] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [assignDialog, setAssignDialog] = useState({ open: false });
+  const [configModal, setConfigModal] = useState({ open: false, sensor: null });
 
   const { data: sensorsData, isLoading, error } = useUnassignedSensors({
     search,
@@ -49,11 +51,18 @@ export function SensorAssignment() {
 
   const confirmAssign = async () => {
     try {
-      await Promise.all(
+      const results = await Promise.all(
         selectedSensors.map((sensorId) =>
           assignSensor.mutateAsync({ sensorId, companyId: selectedCompany })
         )
       );
+
+      // Se atribuiu apenas 1 sensor, abrir modal de configuracao
+      if (selectedSensors.length === 1 && results[0]) {
+        const assignedSensor = results[0];
+        setConfigModal({ open: true, sensor: assignedSensor });
+      }
+
       setSelectedSensors([]);
       setSelectedCompany('');
       setAssignDialog({ open: false });
@@ -200,6 +209,12 @@ export function SensorAssignment() {
         confirmText="Atribuir"
         variant="warning"
         isLoading={assignSensor.isPending}
+      />
+
+      <SensorConfigurationModal
+        isOpen={configModal.open}
+        onClose={() => setConfigModal({ open: false, sensor: null })}
+        sensor={configModal.sensor}
       />
     </div>
   );

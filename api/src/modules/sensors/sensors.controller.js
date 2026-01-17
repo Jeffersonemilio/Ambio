@@ -273,6 +273,81 @@ class SensorsController {
       res.status(400).json({ error: error.message });
     }
   }
+
+  // Configurações de sensores
+  async getConfiguration(req, res) {
+    try {
+      const { id } = req.params;
+      const configuration = await sensorsService.getConfiguration(id, req.user);
+
+      if (!configuration) {
+        return res.json({
+          sensor_id: id,
+          installation_location: null,
+          temperature_min: null,
+          temperature_max: null,
+          humidity_min: null,
+          humidity_max: null,
+          alerts_enabled: true,
+          configured: false,
+        });
+      }
+
+      res.json({
+        ...configuration,
+        configured: true,
+      });
+    } catch (error) {
+      console.error('Erro ao buscar configuração:', error.message);
+      if (error.message === 'Sensor não encontrado') {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error.message === 'Acesso negado') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Erro ao buscar configuração' });
+    }
+  }
+
+  async updateConfiguration(req, res) {
+    try {
+      const { id } = req.params;
+      const {
+        installationLocation,
+        temperatureMin,
+        temperatureMax,
+        humidityMin,
+        humidityMax,
+        alertsEnabled,
+      } = req.body;
+
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const configuration = await sensorsService.updateConfiguration(
+        id,
+        {
+          installationLocation,
+          temperatureMin: temperatureMin !== undefined && temperatureMin !== '' ? parseFloat(temperatureMin) : null,
+          temperatureMax: temperatureMax !== undefined && temperatureMax !== '' ? parseFloat(temperatureMax) : null,
+          humidityMin: humidityMin !== undefined && humidityMin !== '' ? parseFloat(humidityMin) : null,
+          humidityMax: humidityMax !== undefined && humidityMax !== '' ? parseFloat(humidityMax) : null,
+          alertsEnabled,
+        },
+        req.user,
+        ipAddress
+      );
+
+      res.json(configuration);
+    } catch (error) {
+      console.error('Erro ao atualizar configuração:', error.message);
+      if (error.message === 'Sensor não encontrado') {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error.message === 'Acesso negado') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(400).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = new SensorsController();

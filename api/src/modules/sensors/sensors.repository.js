@@ -331,6 +331,73 @@ class SensorsRepository {
     );
     return result.rowCount;
   }
+
+  // Configurações de sensores
+  async findConfigurationBySensorId(sensorId) {
+    const result = await query(
+      `SELECT sc.*, u.name as configured_by_name
+       FROM sensor_configurations sc
+       LEFT JOIN users u ON sc.configured_by = u.id
+       WHERE sc.sensor_id = $1`,
+      [sensorId]
+    );
+    return result.rows[0] || null;
+  }
+
+  async upsertConfiguration(sensorId, config, userId) {
+    const result = await query(
+      `INSERT INTO sensor_configurations
+       (sensor_id, installation_location, temperature_min, temperature_max,
+        humidity_min, humidity_max, alerts_enabled, configured_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (sensor_id)
+       DO UPDATE SET
+         installation_location = EXCLUDED.installation_location,
+         temperature_min = EXCLUDED.temperature_min,
+         temperature_max = EXCLUDED.temperature_max,
+         humidity_min = EXCLUDED.humidity_min,
+         humidity_max = EXCLUDED.humidity_max,
+         alerts_enabled = EXCLUDED.alerts_enabled,
+         configured_by = EXCLUDED.configured_by,
+         updated_at = NOW()
+       RETURNING *`,
+      [
+        sensorId,
+        config.installationLocation || null,
+        config.temperatureMin !== undefined ? config.temperatureMin : null,
+        config.temperatureMax !== undefined ? config.temperatureMax : null,
+        config.humidityMin !== undefined ? config.humidityMin : null,
+        config.humidityMax !== undefined ? config.humidityMax : null,
+        config.alertsEnabled !== false,
+        userId,
+      ]
+    );
+    return result.rows[0];
+  }
+
+  async deleteConfiguration(sensorId) {
+    const result = await query(
+      'DELETE FROM sensor_configurations WHERE sensor_id = $1 RETURNING id',
+      [sensorId]
+    );
+    return result.rowCount > 0;
+  }
+
+  async findSensorsWithActiveAlerts() {
+    const result = await query(
+      `SELECT
+         s.id, s.serial_number, s.company_id,
+         sc.temperature_min, sc.temperature_max,
+         sc.humidity_min, sc.humidity_max,
+         sc.installation_location
+       FROM sensors s
+       INNER JOIN sensor_configurations sc ON s.id = sc.sensor_id
+       WHERE s.is_active = true
+         AND sc.alerts_enabled = true
+         AND s.company_id IS NOT NULL`
+    );
+    return result.rows;
+  }
 }
 
 module.exports = new SensorsRepository();
