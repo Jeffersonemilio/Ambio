@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const usersRepository = require('./users.repository');
 const auditService = require('../audit/audit.service');
+const { emailService } = require('../email');
 
 class UsersService {
   async findAll(filters, pagination, requestingUser) {
@@ -58,6 +59,9 @@ class UsersService {
       details: { email: user.email, userType: user.user_type },
       ipAddress,
     });
+
+    // Enviar email de boas-vindas com a senha
+    await emailService.sendWelcome(user, data.password);
 
     return user;
   }
