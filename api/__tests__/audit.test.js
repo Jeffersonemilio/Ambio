@@ -58,10 +58,10 @@ describe('Audit Module', () => {
     await closeDatabase();
   });
 
-  describe('GET /api/audit/logs', () => {
+  describe('GET /api/audit', () => {
     it('deve listar logs de auditoria para super_admin', async () => {
       const res = await request(app)
-        .get('/api/audit/logs')
+        .get('/api/audit')
         .set('Authorization', `Bearer ${superAdmin.token}`);
 
       expect(res.status).toBe(200);
@@ -73,7 +73,7 @@ describe('Audit Module', () => {
 
     it('deve filtrar por userId', async () => {
       const res = await request(app)
-        .get(`/api/audit/logs?userId=${superAdmin.id}`)
+        .get(`/api/audit?userId=${superAdmin.id}`)
         .set('Authorization', `Bearer ${superAdmin.token}`);
 
       expect(res.status).toBe(200);
@@ -84,7 +84,7 @@ describe('Audit Module', () => {
 
     it('deve filtrar por action', async () => {
       const res = await request(app)
-        .get('/api/audit/logs?action=login')
+        .get('/api/audit?action=login')
         .set('Authorization', `Bearer ${superAdmin.token}`);
 
       expect(res.status).toBe(200);
@@ -95,7 +95,7 @@ describe('Audit Module', () => {
 
     it('deve filtrar por resourceType', async () => {
       const res = await request(app)
-        .get('/api/audit/logs?resourceType=auth')
+        .get('/api/audit?resourceType=auth')
         .set('Authorization', `Bearer ${superAdmin.token}`);
 
       expect(res.status).toBe(200);
@@ -106,7 +106,7 @@ describe('Audit Module', () => {
 
     it('deve filtrar por impersonatedOnly', async () => {
       const res = await request(app)
-        .get('/api/audit/logs?impersonatedOnly=true')
+        .get('/api/audit?impersonatedOnly=true')
         .set('Authorization', `Bearer ${superAdmin.token}`);
 
       expect(res.status).toBe(200);
@@ -120,7 +120,7 @@ describe('Audit Module', () => {
       const endDate = new Date(Date.now() + 86400000).toISOString(); // 1 dia à frente
 
       const res = await request(app)
-        .get(`/api/audit/logs?startDate=${startDate}&endDate=${endDate}`)
+        .get(`/api/audit?startDate=${startDate}&endDate=${endDate}`)
         .set('Authorization', `Bearer ${superAdmin.token}`);
 
       expect(res.status).toBe(200);
@@ -129,7 +129,7 @@ describe('Audit Module', () => {
 
     it('deve respeitar paginação', async () => {
       const res = await request(app)
-        .get('/api/audit/logs?limit=2&offset=0')
+        .get('/api/audit?limit=2&offset=0')
         .set('Authorization', `Bearer ${superAdmin.token}`);
 
       expect(res.status).toBe(200);
@@ -140,19 +140,19 @@ describe('Audit Module', () => {
 
     it('analyst não deve ter acesso aos logs de audit', async () => {
       const res = await request(app)
-        .get('/api/audit/logs')
+        .get('/api/audit')
         .set('Authorization', `Bearer ${ambioAnalyst.token}`);
 
       expect(res.status).toBe(403);
     });
 
     it('deve retornar 401 sem autenticação', async () => {
-      const res = await request(app).get('/api/audit/logs');
+      const res = await request(app).get('/api/audit');
       expect(res.status).toBe(401);
     });
   });
 
-  describe('GET /api/audit/logs/:id', () => {
+  describe('GET /api/audit/:id', () => {
     let auditLogId;
 
     beforeAll(async () => {
@@ -162,7 +162,7 @@ describe('Audit Module', () => {
 
     it('deve retornar log específico', async () => {
       const res = await request(app)
-        .get(`/api/audit/logs/${auditLogId}`)
+        .get(`/api/audit/${auditLogId}`)
         .set('Authorization', `Bearer ${superAdmin.token}`);
 
       expect(res.status).toBe(200);
@@ -173,7 +173,7 @@ describe('Audit Module', () => {
 
     it('deve retornar 404 para log inexistente', async () => {
       const res = await request(app)
-        .get('/api/audit/logs/00000000-0000-0000-0000-000000000000')
+        .get('/api/audit/00000000-0000-0000-0000-000000000000')
         .set('Authorization', `Bearer ${superAdmin.token}`);
 
       expect(res.status).toBe(404);

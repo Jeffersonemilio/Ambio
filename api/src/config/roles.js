@@ -27,6 +27,7 @@ const AMBIO_ROLES = {
 // USUÁRIOS EMPRESA
 const COMPANY_ROLES = {
   admin: [
+    'companies.management:read', // Própria empresa apenas (escopo validado no service)
     'users.management:read',
     'users.management:write',
     'users.management:delete',
@@ -47,6 +48,7 @@ const COMPANY_ROLES = {
   ],
 
   analyst: [
+    'companies.management:read', // Própria empresa apenas (escopo validado no service)
     'sensors.management:read',
     'sensors.groups:read',
     'sensors.readings:read',
@@ -56,6 +58,7 @@ const COMPANY_ROLES = {
   ],
 
   user: [
+    'companies.management:read', // Própria empresa apenas (escopo validado no service)
     'sensors.readings:read',
     'reports.dashboard:read',
   ],

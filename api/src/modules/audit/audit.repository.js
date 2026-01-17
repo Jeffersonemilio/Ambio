@@ -66,8 +66,9 @@ class AuditRepository {
       params
     );
 
-    params.push(pagination.limit);
-    params.push(pagination.offset);
+    const limitParam = paramIndex++;
+    const offsetParam = paramIndex++;
+    const queryParams = [...params, pagination.limit, pagination.offset];
 
     const result = await query(
       `SELECT
@@ -80,8 +81,8 @@ class AuditRepository {
        LEFT JOIN users imp ON al.impersonated_by = imp.id
        ${whereClause}
        ORDER BY al.created_at DESC
-       LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
-      params
+       LIMIT $${limitParam} OFFSET $${offsetParam}`,
+      queryParams
     );
 
     return {
