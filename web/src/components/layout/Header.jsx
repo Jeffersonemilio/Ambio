@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Thermometer, ChevronDown, LogOut, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -13,8 +13,12 @@ const roleLabels = {
 
 export function Header() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const isAmbioUser = user?.userType === 'ambio';
+  const isAdmin = ['super_admin', 'admin'].includes(user?.role);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -31,6 +35,18 @@ export function Header() {
     await logout();
   };
 
+  const isActive = (path) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  };
+
+  const linkClasses = (path) =>
+    `font-medium ${
+      isActive(path)
+        ? 'text-blue-600'
+        : 'text-gray-600 hover:text-gray-900'
+    }`;
+
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -40,15 +56,25 @@ export function Header() {
         </Link>
 
         <nav className="flex items-center gap-6">
-          <Link to="/" className="text-gray-600 hover:text-gray-900 font-medium">
+          <Link to="/" className={linkClasses('/')}>
             Dashboard
           </Link>
-          <Link to="/sensors" className="text-gray-600 hover:text-gray-900 font-medium">
+          <Link to="/sensors" className={linkClasses('/sensors')}>
             Sensores
           </Link>
-          <Link to="/readings" className="text-gray-600 hover:text-gray-900 font-medium">
+          <Link to="/readings" className={linkClasses('/readings')}>
             Leituras
           </Link>
+          {(isAmbioUser || isAdmin) && (
+            <Link to="/users" className={linkClasses('/users')}>
+              Usuarios
+            </Link>
+          )}
+          {isAmbioUser && (
+            <Link to="/companies" className={linkClasses('/companies')}>
+              Empresas
+            </Link>
+          )}
 
           {/* User menu */}
           <div className="relative" ref={dropdownRef}>

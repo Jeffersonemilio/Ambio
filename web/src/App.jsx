@@ -8,6 +8,12 @@ import { Readings } from './pages/Readings';
 import { Login } from './pages/auth/Login';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { ResetPassword } from './pages/auth/ResetPassword';
+import { UsersList } from './pages/users/UsersList';
+import { UserForm } from './pages/users/UserForm';
+import { CompaniesList } from './pages/companies/CompaniesList';
+import { CompanyForm } from './pages/companies/CompanyForm';
+import { CompanyDetail } from './pages/companies/CompanyDetail';
+import { SensorAssignment } from './pages/sensors/SensorAssignment';
 
 function App() {
   return (
@@ -27,8 +33,16 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/sensors" element={<Sensors />} />
+                  <Route path="/sensors/assignment" element={<SensorAssignment />} />
                   <Route path="/sensors/:serialNumber" element={<SensorDetail />} />
                   <Route path="/readings" element={<Readings />} />
+                  <Route path="/users" element={<UsersList />} />
+                  <Route path="/users/new" element={<UserForm />} />
+                  <Route path="/users/:id" element={<UserForm />} />
+                  <Route path="/companies" element={<CompaniesList />} />
+                  <Route path="/companies/new" element={<CompanyForm />} />
+                  <Route path="/companies/:id" element={<CompanyDetail />} />
+                  <Route path="/companies/:id/edit" element={<CompanyForm />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

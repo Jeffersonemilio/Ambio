@@ -130,3 +130,31 @@ export function getReadingStats(params = {}) {
   const query = searchParams.toString();
   return fetchApi(`/api/readings/stats${query ? `?${query}` : ''}`);
 }
+
+export function getSensorsWithFilters(params = {}) {
+  const searchParams = new URLSearchParams();
+
+  if (params.companyId) searchParams.set('companyId', params.companyId);
+  if (params.groupId) searchParams.set('groupId', params.groupId);
+  if (params.isActive !== undefined) searchParams.set('isActive', params.isActive);
+  if (params.unassigned) searchParams.set('unassigned', params.unassigned);
+  if (params.search) searchParams.set('search', params.search);
+  if (params.limit) searchParams.set('limit', params.limit);
+  if (params.offset) searchParams.set('offset', params.offset);
+
+  const query = searchParams.toString();
+  return fetchApi(`/api/sensors${query ? `?${query}` : ''}`);
+}
+
+export function assignSensor(sensorId, companyId) {
+  return fetchApi(`/api/sensors/${sensorId}/assign`, {
+    method: 'POST',
+    body: JSON.stringify({ companyId }),
+  });
+}
+
+export function unassignSensor(sensorId) {
+  return fetchApi(`/api/sensors/${sensorId}/unassign`, {
+    method: 'POST',
+  });
+}
