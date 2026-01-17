@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { publishToQueue, QUEUES } = require('../queue');
+const sensorsRepository = require('../modules/sensors/sensors.repository');
 
 const VALID_BATTERY_LEVELS = ['LOW', 'MEDIUM', 'HIGH'];
 
@@ -120,6 +121,33 @@ router.post('/ingest-temp-hum', async (req, res) => {
       return res.status(400).json({
         success: false,
         errors: validationErrors,
+      });
+    }
+
+    // Validar se o sensor está cadastrado
+    const sensor = await sensorsRepository.findBySerialNumber(req.body.serial_number);
+
+    if (!sensor) {
+      return res.status(404).json({
+        success: false,
+        error: 'Sensor não cadastrado no sistema',
+        serial_number: req.body.serial_number,
+      });
+    }
+
+    if (!sensor.company_id) {
+      return res.status(403).json({
+        success: false,
+        error: 'Sensor não está atribuído a nenhuma empresa',
+        serial_number: req.body.serial_number,
+      });
+    }
+
+    if (!sensor.is_active) {
+      return res.status(403).json({
+        success: false,
+        error: 'Sensor está desativado',
+        serial_number: req.body.serial_number,
       });
     }
 

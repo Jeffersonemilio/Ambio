@@ -1,5 +1,6 @@
 const { consumeQueueBatch, connectQueue, QUEUES } = require('./queue');
-const { batchInsertReadings, runMigration, testConnection } = require('./database');
+const { batchInsertReadings, testConnection } = require('./database');
+const { runMigrations } = require('./database/migrator');
 const config = require('./config');
 
 async function processBatchReadings(messages) {
@@ -30,11 +31,12 @@ async function startWorker() {
   }
   console.log('PostgreSQL conectado');
 
-  // Run migration
-  const migrationSuccess = await runMigration();
-  if (!migrationSuccess) {
-    console.error('Falha ao executar migration.');
-    throw new Error('Migration failed');
+  // Run migrations
+  try {
+    await runMigrations();
+  } catch (error) {
+    console.error('Falha ao executar migrations:', error.message);
+    throw new Error('Migrations failed');
   }
 
   // Connect to RabbitMQ

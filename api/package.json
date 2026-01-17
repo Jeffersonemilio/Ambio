@@ -28,12 +28,15 @@
   "homepage": "https://github.com/Jeffersonemilio/Ambio#readme",
   "dependencies": {
     "amqplib": "^0.10.9",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.17.1",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@railway/cli": "^4.25.2"
