@@ -45,11 +45,15 @@ export function CompanyForm() {
       newErrors.name = 'Nome é obrigatório';
     }
 
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email é obrigatório';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Email inválido';
     }
 
-    if (formData.cnpj && !/^\d{14}$/.test(formData.cnpj.replace(/\D/g, ''))) {
+    if (!formData.cnpj.trim()) {
+      newErrors.cnpj = 'CNPJ é obrigatório';
+    } else if (!/^\d{14}$/.test(formData.cnpj.replace(/\D/g, ''))) {
       newErrors.cnpj = 'CNPJ deve ter 14 dígitos';
     }
 
@@ -150,6 +154,7 @@ export function CompanyForm() {
               onChange={handleCNPJChange}
               error={errors.cnpj}
               placeholder="00.000.000/0000-00"
+              required
             />
 
             <Input
@@ -158,6 +163,7 @@ export function CompanyForm() {
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
               error={errors.email}
+              required
             />
 
             <Input
