@@ -241,11 +241,6 @@ class UsersService {
         throw new Error('Você só pode criar usuários para sua empresa');
       }
       data.companyId = requestingUser.companyId;
-
-      // Admin de empresa não pode criar outro admin
-      if (requestingUser.role === 'admin' && data.companyRole === 'admin') {
-        throw new Error('Você não pode criar outro admin');
-      }
     }
 
     // Apenas super_admin pode criar usuários Ambio
