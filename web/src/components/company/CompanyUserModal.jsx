@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, User, Mail } from 'lucide-react';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
@@ -9,34 +9,35 @@ const roleOptions = [
   { value: 'user', label: 'Usuário' },
 ];
 
-export function CompanyUserModal({ isOpen, onClose, user, onSave, isSaving }) {
-  const isEditing = !!user;
-  const [formData, setFormData] = useState({
+function getInitialFormData(user) {
+  if (user) {
+    return {
+      name: user.name || '',
+      email: user.email || '',
+      role: user.role || 'user',
+      isActive: user.isActive !== false,
+    };
+  }
+  return {
     name: '',
     email: '',
     role: 'user',
     isActive: true,
-  });
+  };
+}
+
+export function CompanyUserModal({ isOpen, onClose, user, onSave, isSaving }) {
+  const isEditing = !!user;
+  const [formData, setFormData] = useState(() => getInitialFormData(user));
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        role: user.role || 'user',
-        isActive: user.isActive !== false,
-      });
-    } else {
-      setFormData({
-        name: '',
-        email: '',
-        role: 'user',
-        isActive: true,
-      });
-    }
+  // Reset form when user changes (modal opens with different user)
+  const [prevUser, setPrevUser] = useState(user);
+  if (user !== prevUser) {
+    setPrevUser(user);
+    setFormData(getInitialFormData(user));
     setError(null);
-  }, [user, isOpen]);
+  }
 
   if (!isOpen) return null;
 
