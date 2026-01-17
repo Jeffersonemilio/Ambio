@@ -7,7 +7,9 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "worker": "node src/worker.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --runInBand --forceExit",
+    "test:watch": "jest --watch --runInBand",
+    "test:coverage": "jest --coverage --runInBand --forceExit",
     "load-test": "node scripts/load-test.js",
     "load-test:light": "node scripts/load-test.js --sensors=50 --duration=5 --rate=20",
     "load-test:full": "node scripts/load-test.js --sensors=100 --duration=30 --rate=30",
@@ -39,6 +41,8 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@railway/cli": "^4.25.2"
+    "@railway/cli": "^4.25.2",
+    "jest": "^30.2.0",
+    "supertest": "^7.2.2"
   }
 }
