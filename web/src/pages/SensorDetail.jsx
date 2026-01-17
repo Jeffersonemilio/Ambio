@@ -23,7 +23,7 @@ export function SensorDetail() {
   if (sensorLoading) return <Loading />;
   if (sensorError) return <ErrorMessage message="Erro ao carregar sensor." />;
 
-  const sensor = sensorData?.data;
+  const sensor = sensorData;
   const readings = readingsData?.data || [];
 
   if (!sensor) {
@@ -41,9 +41,9 @@ export function SensorDetail() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{sensor.serial_number}</h1>
-          {sensor.last_reading && (
+          {sensor.last_reading_at && (
             <p className="text-sm text-gray-500">
-              Última leitura: {formatDate(sensor.last_reading.received_at)}
+              Última leitura: {formatDate(sensor.last_reading_at)}
             </p>
           )}
         </div>
@@ -58,7 +58,7 @@ export function SensorDetail() {
             <div>
               <p className="text-sm text-gray-500">Temperatura</p>
               <p className="text-2xl font-bold">
-                {formatTemperature(sensor.last_reading?.temperature || 0)}
+                {formatTemperature(sensor.last_temperature)}
               </p>
             </div>
           </div>
@@ -72,7 +72,7 @@ export function SensorDetail() {
             <div>
               <p className="text-sm text-gray-500">Umidade</p>
               <p className="text-2xl font-bold">
-                {formatHumidity(sensor.last_reading?.humidity || 0)}
+                {formatHumidity(sensor.last_humidity)}
               </p>
             </div>
           </div>
@@ -85,7 +85,7 @@ export function SensorDetail() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Bateria</p>
-              <BatteryBadge level={sensor.last_reading?.battery_level || 'UNKNOWN'} />
+              <BatteryBadge level={sensor.last_battery_level || 'UNKNOWN'} />
             </div>
           </div>
         </Card>

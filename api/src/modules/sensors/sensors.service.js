@@ -12,7 +12,12 @@ class SensorsService {
   }
 
   async findById(id, requestingUser) {
-    const sensor = await sensorsRepository.findById(id);
+    // Verificar se é UUID ou serial_number
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    const sensor = isUuid
+      ? await sensorsRepository.findById(id)
+      : await sensorsRepository.findBySerialNumber(id);
 
     if (!sensor) {
       return null;
