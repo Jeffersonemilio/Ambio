@@ -38,6 +38,7 @@ export function UserForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    password: '',
     userType: 'company',
     companyId: '',
     role: 'user',
@@ -51,9 +52,10 @@ export function UserForm() {
       setFormData({
         name: userData.name || '',
         email: userData.email || '',
+        password: '',
         userType: userData.user_type || 'company',
         companyId: userData.company_id || '',
-        role: userData.role || 'user',
+        role: userData.company_role || userData.ambio_role || 'user',
       });
     }
   }, [userData]);
@@ -69,6 +71,12 @@ export function UserForm() {
       newErrors.email = 'Email é obrigatório';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Email inválido';
+    }
+
+    if (!isEditing && !formData.password) {
+      newErrors.password = 'Senha é obrigatória';
+    } else if (!isEditing && formData.password.length < 8) {
+      newErrors.password = 'Senha deve ter no mínimo 8 caracteres';
     }
 
     if (!formData.role) {
@@ -103,10 +111,21 @@ export function UserForm() {
     const data = {
       name: formData.name,
       email: formData.email,
-      role: formData.role,
       userType: formData.userType,
-      companyId: formData.userType === 'company' ? formData.companyId : null,
     };
+
+    // Adicionar campos específicos por tipo de usuário
+    if (formData.userType === 'company') {
+      data.companyId = formData.companyId;
+      data.companyRole = formData.role;
+    } else {
+      data.ambioRole = formData.role;
+    }
+
+    // Adicionar senha apenas na criação
+    if (!isEditing) {
+      data.password = formData.password;
+    }
 
     try {
       if (isEditing) {
@@ -176,6 +195,18 @@ export function UserForm() {
               required
               disabled={isEditing}
             />
+
+            {!isEditing && (
+              <Input
+                label="Senha"
+                type="password"
+                value={formData.password}
+                onChange={(e) => handleChange('password', e.target.value)}
+                error={errors.password}
+                required
+                placeholder="Mínimo 8 caracteres"
+              />
+            )}
 
             {isAmbioUser && (
               <div className="space-y-1">
