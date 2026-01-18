@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Radio, Building2 } from 'lucide-react';
+import { ArrowLeft, Radio, Building2, Plus } from 'lucide-react';
 import { Card, CardHeader } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Loading } from '../../components/common/Loading';
@@ -11,6 +11,7 @@ import { SearchInput } from '../../components/common/SearchInput';
 import { Select } from '../../components/common/Select';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { SensorConfigurationModal } from '../../components/sensors/SensorConfigurationModal';
+import { SensorCreationModal } from '../../components/sensors/SensorCreationModal';
 import { useUnassignedSensors, useAssignSensor } from '../../hooks/useSensors';
 import { useCompanies } from '../../hooks/useCompanies';
 import { formatDate } from '../../utils/formatters';
@@ -22,6 +23,7 @@ export function SensorAssignment() {
   const [selectedCompany, setSelectedCompany] = useState('');
   const [assignDialog, setAssignDialog] = useState({ open: false });
   const [configModal, setConfigModal] = useState({ open: false, sensor: null });
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const { data: sensorsData, isLoading, error } = useUnassignedSensors({
     search,
@@ -118,21 +120,27 @@ export function SensorAssignment() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link
-          to="/sensors"
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Atribuição de Sensores
-          </h1>
-          <p className="text-sm text-gray-500">
-            {total} sensor{total !== 1 ? 'es' : ''} não atribuído{total !== 1 ? 's' : ''}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link
+            to="/sensors"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Atribuição de Sensores
+            </h1>
+            <p className="text-sm text-gray-500">
+              {total} sensor{total !== 1 ? 'es' : ''} não atribuído{total !== 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
+        <Button onClick={() => setCreateModalOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Sensor
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -215,6 +223,11 @@ export function SensorAssignment() {
         isOpen={configModal.open}
         onClose={() => setConfigModal({ open: false, sensor: null })}
         sensor={configModal.sensor}
+      />
+
+      <SensorCreationModal
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
       />
     </div>
   );

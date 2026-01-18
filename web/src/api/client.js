@@ -178,3 +178,10 @@ export function updateSensorConfiguration(sensorId, config) {
     body: JSON.stringify(config),
   });
 }
+
+export function createSensor(data) {
+  return fetchApi('/api/sensors', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}

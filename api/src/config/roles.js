@@ -9,6 +9,7 @@ const AMBIO_ROLES = {
     'sensors.management:read',
     'sensors.readings:read',
     'sensors.groups:read',
+    'notifications.alerts:read',
     'reports.dashboard:read',
     'reports.export:read',
   ],

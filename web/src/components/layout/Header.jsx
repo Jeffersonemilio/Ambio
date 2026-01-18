@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Thermometer, ChevronDown, LogOut, Settings, Building2 } from 'lucide-react';
+import { Thermometer, ChevronDown, LogOut, Settings, Building2, Bell } from 'lucide-react';
 import { Avatar } from '../common/Avatar';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -69,6 +69,12 @@ export function Header() {
           </Link>
           <Link to="/readings" className={linkClasses('/readings')}>
             Leituras
+          </Link>
+          <Link to="/alerts" className={linkClasses('/alerts')}>
+            <span className="flex items-center gap-1">
+              <Bell className="w-4 h-4" />
+              Alertas
+            </span>
           </Link>
           {(isAmbioUser || isAdmin) && (
             <Link to="/users" className={linkClasses('/users')}>

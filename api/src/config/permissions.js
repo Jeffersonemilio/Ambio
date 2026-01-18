@@ -34,6 +34,11 @@ const PERMISSIONS = {
   audit: {
     logs: ['read'],
   },
+
+  // Módulo de Configuracoes do Sistema (apenas Ambio)
+  'system-settings': {
+    management: ['read', 'write'],
+  },
 };
 
 function parsePermission(permissionString) {

@@ -18,6 +18,10 @@ const sensorsModuleRoutes = require('./modules/sensors/sensors.routes');
 const { groupsRouter } = require('./modules/sensors/sensors.routes');
 const auditRoutes = require('./modules/audit/audit.routes');
 
+// Módulos de notificacoes
+const { alertsRoutes } = require('./modules/alerts');
+const { systemSettingsRoutes } = require('./modules/system-settings');
+
 const app = express();
 
 // CORS configuration for frontend
@@ -51,5 +55,9 @@ app.use('/api/companies', companiesRoutes);
 app.use('/api/companies/:companyId/groups', groupsRouter);
 app.use('/api/sensors', sensorsModuleRoutes);
 app.use('/api/audit', auditRoutes);
+
+// Módulos de notificacoes e alertas
+app.use('/api/alerts', alertsRoutes);
+app.use('/api/system-settings', systemSettingsRoutes);
 
 module.exports = app;

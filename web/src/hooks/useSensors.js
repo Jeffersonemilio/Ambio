@@ -7,6 +7,7 @@ import {
   unassignSensor,
   getSensorConfiguration,
   updateSensorConfiguration,
+  createSensor,
 } from '../api/client';
 
 export function useSensors() {
@@ -77,6 +78,17 @@ export function useUpdateSensorConfiguration() {
     onSuccess: (_, { sensorId }) => {
       queryClient.invalidateQueries({ queryKey: ['sensor-configuration', sensorId] });
       queryClient.invalidateQueries({ queryKey: ['sensor', sensorId] });
+      queryClient.invalidateQueries({ queryKey: ['sensors'] });
+    },
+  });
+}
+
+export function useCreateSensor() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createSensor,
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sensors'] });
     },
   });
